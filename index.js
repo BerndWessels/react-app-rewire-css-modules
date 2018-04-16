@@ -81,9 +81,27 @@ module.exports = function (includePaths) {
         addBeforeRule(config.module.rules, fileLoaderMatcher, sassRule);
 
         // Create and attach the new sass modules rule.
-        const sassModulesRule = cloneDeep(sassRule);
+        const sassModulesRule = cloneDeep(cssModulesRule);
+
         sassModulesRule.test = /\.module\.s[ac]ss$/;
-        delete sassModulesRule['exclude'];
+        addAfterRule(sassModulesRule, postcssLoaderMatcher, {
+            loader: require.resolve('resolve-url-loader'),
+            options: {
+                sourceMap: true
+            }
+        });
+        addAfterRule(sassModulesRule, resolveUrlLoaderMatcher, {
+            loader: require.resolve('sass-loader'),
+            options: {
+                sourceMap: true,
+                includePaths
+            }
+        });
+        const sassModulesRulePostcssLoader = findRule(sassModulesRule, postcssLoaderMatcher);
+        sassModulesRulePostcssLoader.options = Object.assign({
+            sourceMap: true
+        }, sassModulesRulePostcssLoader.options);
+
         addBeforeRule(config.module.rules, fileLoaderMatcher, sassModulesRule);
 
         return config;
